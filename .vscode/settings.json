@@ -1,0 +1,15 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.openOcdConfigs": [
+    "board/esp32s3-builtin.cfg"
+  ],
+  "idf.portWin": "COM6",
+  "idf.flashType": "UART",
+  "files.associations": {
+    "esp_lcd_panel_st7789.h": "c",
+    "esp_lvgl_port.h": "c",
+    "spi_master.h": "c",
+    "freertos.h": "c",
+    "esp_heap_caps.h": "c"
+  }
+}
