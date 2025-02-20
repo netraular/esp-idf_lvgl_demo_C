@@ -15,53 +15,67 @@
 static const char *TAG = "main";
 
 static lv_disp_t *disp_handle = NULL;
+//static lv_obj_t *scr = NULL; //  No necesario ahora, usamos lv_scr_act()
 
-void view_colors_task(void *pvParameters) {
-    lv_obj_t *scr = lv_disp_get_scr_act(disp_handle);
+// Definimos los colores como macros
+#define MY_COLOR_RED    0xFF0000
+#define MY_COLOR_GREEN  0x00FF00
+#define MY_COLOR_BLUE   0x0000FF
+#define MY_COLOR_YELLOW 0xFFFF00
 
-    // Usamos un array de lv_color_t directamente.
-    lv_color_t palette_colors[] = {
-        lv_palette_main(LV_PALETTE_RED),
-        lv_palette_main(LV_PALETTE_PINK),
-        lv_palette_main(LV_PALETTE_PURPLE),
-        lv_palette_main(LV_PALETTE_DEEP_PURPLE),
-        lv_palette_main(LV_PALETTE_INDIGO),
-        lv_palette_main(LV_PALETTE_BLUE),
-        lv_palette_main(LV_PALETTE_LIGHT_BLUE),
-        lv_palette_main(LV_PALETTE_CYAN),
-        lv_palette_main(LV_PALETTE_TEAL),
-        lv_palette_main(LV_PALETTE_GREEN),
-        lv_palette_main(LV_PALETTE_LIGHT_GREEN),
-        lv_palette_main(LV_PALETTE_LIME),
-        lv_palette_main(LV_PALETTE_YELLOW),
-        lv_palette_main(LV_PALETTE_AMBER),
-        lv_palette_main(LV_PALETTE_ORANGE),
-        lv_palette_main(LV_PALETTE_DEEP_ORANGE),
-        lv_palette_main(LV_PALETTE_BROWN),
-        lv_palette_main(LV_PALETTE_BLUE_GREY),
-        lv_palette_main(LV_PALETTE_GREY),
-    };
+// Estructura para asociar color y nombre (global para usarla en app_main)
+struct ColorInfo {
+    uint32_t color;
+    const char *name;
+};
 
-    int color_index = 0;
-    int palette_len = sizeof(palette_colors) / sizeof(palette_colors[0]);
+// Array de colores (global para usarlo en app_main)
+static const struct ColorInfo palette_colors[] = {
+    {MY_COLOR_RED,   "Red"},
+    {MY_COLOR_GREEN, "Green"},
+    {MY_COLOR_BLUE,  "Blue"},
+    {MY_COLOR_YELLOW,"Yellow"},
+};
 
-    while (1) {
-        if (color_index == 0) {
-            lv_obj_set_style_bg_color(scr, lv_color_white(), LV_PART_MAIN);
-            lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN);
-            vTaskDelay(pdMS_TO_TICKS(500));
-            lv_obj_set_style_bg_color(scr, lv_color_black(), LV_PART_MAIN);
-            lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN);
-            vTaskDelay(pdMS_TO_TICKS(500));
-        }
 
-        lv_obj_set_style_bg_color(scr, palette_colors[color_index], LV_PART_MAIN);
-        lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN);
+// Función para crear las casillas (ahora toma la pantalla como argumento)
+static void create_color_grid(lv_obj_t *parent) {
+    // Crear un contenedor para organizar las casillas
+    lv_obj_t *cont = lv_obj_create(parent);
+    lv_obj_set_size(cont, 240, 240);
+    lv_obj_align(cont, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_layout(cont, LV_LAYOUT_GRID); // Usamos un grid layout
 
-        color_index = (color_index + 1) % palette_len;
-        vTaskDelay(pdMS_TO_TICKS(1000));
+    // Definir las columnas (2 columnas de igual tamaño)
+    static lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+    // Definir las filas (2 filas de igual tamaño)
+    static lv_coord_t row_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+
+    lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
+
+    // Crear las 4 casillas
+    for (size_t i = 0; i < 4; i++) {
+        lv_obj_t *cell = lv_obj_create(cont);
+        lv_obj_set_size(cell, 120, 120); // Tamaño de cada casilla
+
+        // Calcular fila y columna
+        int row = i / 2;
+        int col = i % 2;
+        lv_obj_set_grid_cell(cell, LV_GRID_ALIGN_STRETCH, col, 1,
+                             LV_GRID_ALIGN_STRETCH, row, 1);
+
+
+        lv_obj_set_style_bg_color(cell, lv_color_hex(palette_colors[i].color), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(cell, LV_OPA_COVER, LV_PART_MAIN);
+
+        // Añadir el texto
+        lv_obj_t *label = lv_label_create(cell);
+        lv_label_set_text(label, palette_colors[i].name);
+        lv_obj_set_style_text_color(label, lv_color_black(), LV_PART_MAIN); // Texto en negro
+        lv_obj_center(label); // Centrar el texto dentro de la casilla
     }
 }
+
 
 void app_main(void) {
     const lvgl_port_cfg_t lvgl_cfg = ESP_LVGL_PORT_INIT_CONFIG();
@@ -94,7 +108,7 @@ void app_main(void) {
         .lcd_param_bits = 8,
         .spi_mode = 0,
         .trans_queue_depth = 10,
-        .on_color_trans_done = NULL, // Usar NULL en C
+        .on_color_trans_done = NULL,
         .user_ctx = NULL,
         .flags = {}
     };
@@ -103,25 +117,24 @@ void app_main(void) {
     esp_lcd_panel_handle_t panel_handle = NULL;
     esp_lcd_panel_dev_config_t panel_config = {
         .reset_gpio_num = TFT_RST,
-        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_BGR,
+        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB, // Corregido a RGB
         .bits_per_pixel = 16,
-        .flags = {},  //Inicializar flags
+        .flags = {},
         .vendor_config = NULL
-
     };
     ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(io_handle, &panel_config, &panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
-
+    ESP_ERROR_CHECK(esp_lcd_panel_invert_color(panel_handle, true));
 
     if (TFT_BL >= 0) {
         gpio_config_t bk_gpio_config = {
             .mode = GPIO_MODE_OUTPUT,
             .pin_bit_mask = 1ULL << TFT_BL,
-            .pull_down_en = GPIO_PULLDOWN_DISABLE, // Asegúrate de deshabilitar pull-down
-            .pull_up_en = GPIO_PULLUP_DISABLE,   // y pull-up si no los necesitas
-            .intr_type = GPIO_INTR_DISABLE //Sin interrupcion
+            .pull_down_en = GPIO_PULLDOWN_DISABLE,
+            .pull_up_en = GPIO_PULLUP_DISABLE,
+            .intr_type = GPIO_INTR_DISABLE
         };
         ESP_ERROR_CHECK(gpio_config(&bk_gpio_config));
         gpio_set_level(TFT_BL, EXAMPLE_LCD_BK_LIGHT_ON_LEVEL);
@@ -140,7 +153,10 @@ void app_main(void) {
 	        .mirror_x = false,
 	        .mirror_y = false,
 	    },
-    .flags = {} //Inicializa flags
+    .flags = {
+			.buff_dma = 1,
+			.swap_bytes = 1, //Añadido swap_bytes
+		}
 	};
 
     disp_handle = lvgl_port_add_disp(&disp_cfg);
@@ -149,8 +165,15 @@ void app_main(void) {
         while (1) {}
     }
 
-    xTaskCreate(view_colors_task, "colors_task", 4096, NULL, 5, NULL);
+    // Obtenemos la pantalla activa (no es necesario hacerla global)
+    lv_obj_t *scr = lv_disp_get_scr_act(disp_handle);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN); // Fondo opaco
 
+    // Crear la cuadrícula de colores
+    create_color_grid(scr);
+
+
+    // --- Bucle principal (solo llama a lv_timer_handler) ---
     while (1) {
         lv_timer_handler();
         vTaskDelay(pdMS_TO_TICKS(10));

@@ -10,6 +10,7 @@
     "esp_lvgl_port.h": "c",
     "spi_master.h": "c",
     "freertos.h": "c",
-    "esp_heap_caps.h": "c"
+    "esp_heap_caps.h": "c",
+    "esp_lcd_panel_vendor.h": "c"
   }
 }
