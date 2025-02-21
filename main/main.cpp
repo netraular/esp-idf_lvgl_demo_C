@@ -14,14 +14,13 @@
 
 static const char *TAG = "main";
 
-static lv_disp_t *disp_handle = NULL;
-//static lv_obj_t *scr = NULL; //  No necesario ahora, usamos lv_scr_act()
+static lv_disp_t *disp_handle = nullptr;
 
 // Definimos los colores como macros
-#define MY_COLOR_RED    0xFF0000
-#define MY_COLOR_GREEN  0x00FF00
-#define MY_COLOR_BLUE   0x0000FF
-#define MY_COLOR_YELLOW 0xFFFF00
+constexpr uint32_t MY_COLOR_RED = 0xFF0000;
+constexpr uint32_t MY_COLOR_GREEN = 0x00FF00;
+constexpr uint32_t MY_COLOR_BLUE = 0x0000FF;
+constexpr uint32_t MY_COLOR_YELLOW = 0xFFFF00;
 
 // Estructura para asociar color y nombre (global para usarla en app_main)
 struct ColorInfo {
@@ -54,7 +53,7 @@ static void create_color_grid(lv_obj_t *parent) {
     lv_obj_set_grid_dsc_array(cont, col_dsc, row_dsc);
 
     // Crear las 4 casillas
-    for (size_t i = 0; i < 4; i++) {
+    for (std::size_t i = 0; i < 4; i++) {
         lv_obj_t *cell = lv_obj_create(cont);
         lv_obj_set_size(cell, 120, 120); // Tamaño de cada casilla
 
@@ -77,90 +76,118 @@ static void create_color_grid(lv_obj_t *parent) {
 }
 
 
-void app_main(void) {
+extern "C" void app_main(void) {
     const lvgl_port_cfg_t lvgl_cfg = ESP_LVGL_PORT_INIT_CONFIG();
     ESP_ERROR_CHECK(lvgl_port_init(&lvgl_cfg));
 
+    // Declarar los manejadores de IO y panel
+    esp_lcd_panel_io_handle_t io_handle = nullptr;
+    esp_lcd_panel_handle_t panel_handle = nullptr;
+
+    // spi_bus_config_t - Orden correcto
     spi_bus_config_t buscfg = {
-        .miso_io_num = TFT_MISO,
         .mosi_io_num = TFT_MOSI,
+        .miso_io_num = TFT_MISO,
         .sclk_io_num = TFT_SCLK,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
+        .data4_io_num = -1,
+        .data5_io_num = -1,
+        .data6_io_num = -1,
+        .data7_io_num = -1,
+        .data_io_default_level = 0,
         .max_transfer_sz = SCREEN_WIDTH * 40 * sizeof(lv_color_t),
         .flags = 0,
-        .intr_flags = 0,
-		.data4_io_num = -1,
-		.data5_io_num = -1,
-		.data6_io_num = -1,
-		.data7_io_num = -1,
-		.data_io_default_level = 0,
-		.isr_cpu_id = 0
+        .isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO,
+        .intr_flags = 0
     };
     ESP_ERROR_CHECK(spi_bus_initialize(LCD_HOST, &buscfg, SPI_DMA_CH_AUTO));
 
-    esp_lcd_panel_io_handle_t io_handle = NULL;
+    // esp_lcd_panel_io_spi_config_t - Orden correcto
     esp_lcd_panel_io_spi_config_t io_config = {
-        .dc_gpio_num = TFT_DC,
         .cs_gpio_num = TFT_CS,
+        .dc_gpio_num = TFT_DC,
+        .spi_mode = 0,
         .pclk_hz = EXAMPLE_LCD_PIXEL_CLOCK_HZ,
+        .trans_queue_depth = 10,
+        .on_color_trans_done = nullptr,
+        .user_ctx = nullptr,
         .lcd_cmd_bits = 8,
         .lcd_param_bits = 8,
-        .spi_mode = 0,
-        .trans_queue_depth = 10,
-        .on_color_trans_done = NULL,
-        .user_ctx = NULL,
-        .flags = {}
+        .cs_ena_pretrans = 0,
+        .cs_ena_posttrans = 0,
+        .flags = {
+            .dc_high_on_cmd = 0,
+            .dc_low_on_data = 0,
+            .dc_low_on_param = 0,
+            .octal_mode = 0,
+            .quad_mode = 0,
+            .sio_mode = 0,
+            .lsb_first = 0,
+            .cs_high_active = 0,
+        }
     };
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_HOST, &io_config, &io_handle));
 
-    esp_lcd_panel_handle_t panel_handle = NULL;
+    // esp_lcd_panel_dev_config_t - Orden correcto
     esp_lcd_panel_dev_config_t panel_config = {
         .reset_gpio_num = TFT_RST,
-        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB, // Corregido a RGB
+        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
+        .data_endian = LCD_RGB_DATA_ENDIAN_LITTLE,
         .bits_per_pixel = 16,
         .flags = {},
-        .vendor_config = NULL
+        .vendor_config = nullptr
     };
     ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(io_handle, &panel_config, &panel_handle));
+
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
     ESP_ERROR_CHECK(esp_lcd_panel_invert_color(panel_handle, true));
 
     if (TFT_BL >= 0) {
+        // gpio_config_t - Orden correcto
         gpio_config_t bk_gpio_config = {
-            .mode = GPIO_MODE_OUTPUT,
             .pin_bit_mask = 1ULL << TFT_BL,
-            .pull_down_en = GPIO_PULLDOWN_DISABLE,
+            .mode = GPIO_MODE_OUTPUT,
             .pull_up_en = GPIO_PULLUP_DISABLE,
+            .pull_down_en = GPIO_PULLDOWN_DISABLE,
             .intr_type = GPIO_INTR_DISABLE
         };
         ESP_ERROR_CHECK(gpio_config(&bk_gpio_config));
         gpio_set_level(TFT_BL, EXAMPLE_LCD_BK_LIGHT_ON_LEVEL);
     }
 
-	const lvgl_port_display_cfg_t disp_cfg = {
-	    .io_handle = io_handle,
-	    .panel_handle = panel_handle,
-	    .buffer_size = SCREEN_WIDTH * 40 * sizeof(lv_color_t),
-	    .double_buffer = true,
-	    .hres = SCREEN_WIDTH,
-	    .vres = SCREEN_HEIGHT,
-	    .monochrome = false,
-	    .rotation = {
-	        .swap_xy = false,
-	        .mirror_x = false,
-	        .mirror_y = false,
-	    },
-    .flags = {
-			.buff_dma = 1,
-			.swap_bytes = 1, //Añadido swap_bytes
-		}
-	};
+    // lvgl_port_display_cfg_t - Orden correcto
+    // lvgl_port_display_cfg_t - Orden correcto
+    const lvgl_port_display_cfg_t disp_cfg = {
+        .io_handle = io_handle,
+        .panel_handle = panel_handle,
+        .control_handle = nullptr,
+        .buffer_size = SCREEN_WIDTH * 40 * sizeof(lv_color_t),
+        .double_buffer = true,
+        .trans_size = 0,
+        .hres = SCREEN_WIDTH,
+        .vres = SCREEN_HEIGHT,
+        .monochrome = false,
+        .rotation = {
+            .swap_xy = false,
+            .mirror_x = false,
+            .mirror_y = false,
+        },
+        .color_format = LV_COLOR_FORMAT_NATIVE,
+        .flags = {
+            .buff_dma = 1,
+            .buff_spiram = 0,
+            .sw_rotate = 0,
+            .swap_bytes = 0,
+            .full_refresh = 0,
+            .direct_mode = 0,
+        }
+    };
 
     disp_handle = lvgl_port_add_disp(&disp_cfg);
-    if (disp_handle == NULL) {
+    if (disp_handle == nullptr) {
         ESP_LOGE(TAG, "Error al agregar la pantalla a LVGL Port");
         while (1) {}
     }
