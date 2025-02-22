@@ -5,18 +5,16 @@
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_vendor.h"
 #include "esp_lcd_panel_ops.h"
-#include "lvgl.h"
+#include "lvgl.h" // Include LVGL here
 
-// Estructura para contener los manejadores de la pantalla
 typedef struct {
     esp_lcd_panel_io_handle_t io_handle;
     esp_lcd_panel_handle_t panel_handle;
-    lv_disp_t *disp_handle;
+    // disp_handle is no longer needed, as we manage the LVGL display directly
 } screen_t;
 
-// Funciones
 extern screen_t* screen_init();
-extern void screen_deinit(screen_t* screen); // Destruir los handles y liberar recursos
-extern void switch_screen(lv_obj_t* screen); // Cambiar la pantalla activa
+extern void screen_deinit(screen_t* screen);
+extern void switch_screen(lv_obj_t* screen);
 
 #endif // SCREEN_MANAGER_H
