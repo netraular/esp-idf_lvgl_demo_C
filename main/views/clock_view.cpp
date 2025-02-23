@@ -125,61 +125,45 @@ static void create_grid(lv_obj_t* parent) {
 }
 
 // Handlers de botón específicos de esta vista
-static void clock_view_button1_handler(void* arg, void* usr_data) {
-    ESP_LOGI(TAG, "Botón 1 presionado en vista de reloj");
-}
+    static void clock_view_button1_handler(void* arg, void* usr_data) {
+        ESP_LOGI(TAG, "Botón 1 presionado en vista de reloj");
+    }
 
-static void clock_view_button2_handler(void* arg, void* usr_data) {
-    ESP_LOGI(TAG, "Botón 2 presionado en vista de reloj");
-}
+    static void clock_view_button2_handler(void* arg, void* usr_data) {
+        ESP_LOGI(TAG, "Botón 2 presionado en vista de reloj");
+    }
 
-static void clock_view_button3_handler(void* arg, void* usr_data) {
-    ESP_LOGI(TAG, "Botón 3 presionado en vista de reloj");
-}
+    static void clock_view_button3_handler(void* arg, void* usr_data) {
+        ESP_LOGI(TAG, "Botón 3 presionado en vista de reloj");
+    }
 
-static void clock_view_button4_handler(void* arg, void* usr_data) {
-    ESP_LOGI(TAG, "Botón 4 presionado en vista de reloj");
-}
+    static void clock_view_button4_handler(void* arg, void* usr_data) {
+        ESP_LOGI(TAG, "Botón 4 presionado en vista de reloj");
+    }
 
-// Registrar callbacks cuando se crea la vista
-void clock_view_register_button_handlers() {
-    if (button1) {
+// Registrar callbacks de botón cuando se crea la vista
+    void clock_view_register_button_handlers() {
         iot_button_register_cb(button1, BUTTON_SINGLE_CLICK, NULL, clock_view_button1_handler, NULL);
         ESP_LOGI(TAG, "Callback del botón 1 registrado en vista de reloj");
-    }
-    if (button2) {
         iot_button_register_cb(button2, BUTTON_SINGLE_CLICK, NULL, clock_view_button2_handler, NULL);
         ESP_LOGI(TAG, "Callback del botón 2 registrado en vista de reloj");
-    }
-    if (button3) {
         iot_button_register_cb(button3, BUTTON_SINGLE_CLICK, NULL, clock_view_button3_handler, NULL);
         ESP_LOGI(TAG, "Callback del botón 3 registrado en vista de reloj");
-    }
-    if (button4) {
         iot_button_register_cb(button4, BUTTON_SINGLE_CLICK, NULL, clock_view_button4_handler, NULL);
         ESP_LOGI(TAG, "Callback del botón 4 registrado en vista de reloj");
     }
-}
 
-// Eliminar callbacks cuando se destruye la vista
-void clock_view_unregister_button_handlers() {
-    if (button1) {
-        iot_button_unregister_cb(button1, BUTTON_SINGLE_CLICK, NULL);
-        ESP_LOGI(TAG, "Callback del botón 1 desregistrado en vista de reloj");
+// Eliminar callbacks de botón cuando se destruye la vista
+    void clock_view_unregister_button_handlers() {
+            iot_button_unregister_cb(button1, BUTTON_SINGLE_CLICK, NULL);
+            ESP_LOGI(TAG, "Callback del botón 1 desregistrado en vista de reloj");
+            iot_button_unregister_cb(button2, BUTTON_SINGLE_CLICK, NULL);
+            ESP_LOGI(TAG, "Callback del botón 2 desregistrado en vista de reloj");
+            iot_button_unregister_cb(button3, BUTTON_SINGLE_CLICK, NULL);
+            ESP_LOGI(TAG, "Callback del botón 3 desregistrado en vista de reloj");
+            iot_button_unregister_cb(button4, BUTTON_SINGLE_CLICK, NULL);
+            ESP_LOGI(TAG, "Callback del botón 4 desregistrado en vista de reloj");
     }
-    if (button2) {
-        iot_button_unregister_cb(button2, BUTTON_SINGLE_CLICK, NULL);
-        ESP_LOGI(TAG, "Callback del botón 2 desregistrado en vista de reloj");
-    }
-    if (button3) {
-        iot_button_unregister_cb(button3, BUTTON_SINGLE_CLICK, NULL);
-        ESP_LOGI(TAG, "Callback del botón 3 desregistrado en vista de reloj");
-    }
-    if (button4) {
-        iot_button_unregister_cb(button4, BUTTON_SINGLE_CLICK, NULL);
-        ESP_LOGI(TAG, "Callback del botón 4 desregistrado en vista de reloj");
-    }
-}
 
 // Crear la vista principal
 lv_obj_t* create_clock_view(lv_obj_t* parent) {
