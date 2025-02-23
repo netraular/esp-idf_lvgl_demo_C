@@ -11,36 +11,10 @@
 #include "esp_check.h"
 #include "esp_timer.h"
 
-
-#define ANSI_COLOR_MAGENTA "\x1b[35m" // Lila/Magenta
-#define ANSI_COLOR_RESET   "\x1b[0m"  // Resetear a los colores por defecto
-
 static const char *TAG = "main";
-
 
 // Declarar la variable global screen
 static screen_t* screen = nullptr;
-
-// LVGL display driver and draw buffer MUST be declared BEFORE disp_flush_cb
-static lv_display_t * disp;
-static lv_draw_buf_t draw_buf;
-static lv_color_t *buf1;
-static lv_color_t *buf2;
-
-// LVGL flush callback
-static void disp_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
-    lv_color_t *color_p = reinterpret_cast<lv_color_t *>(px_map);
-    
-    if (screen && screen->panel_handle) {
-        esp_lcd_panel_handle_t panel_handle = screen->panel_handle;
-        
-        ESP_LOGD(TAG, "[DEBUG] Área refrescada: X(%hd-%hd), Y(%hd-%hd)", 
-                (short)area->x1, (short)area->x2, (short)area->y1, (short)area->y2);
-        
-        esp_lcd_panel_draw_bitmap(panel_handle, area->x1, area->y1, area->x2 + 1, area->y2 + 1, color_p);
-    }
-    lv_display_flush_ready(disp);
-}
 
 // Timer callback para el tick de LVGL
 static void lv_tick_timer_cb(void *arg) {
@@ -50,18 +24,14 @@ static void lv_tick_timer_cb(void *arg) {
 extern "C" void app_main(void) {
     ESP_LOGI(TAG, "Starting application");
 
-    // 1. Inicializar pantalla
+    // 1. Inicializar pantalla (esto ahora incluye la inicialización de LVGL)
     screen = screen_init();
     if (!screen) {
         ESP_LOGE(TAG, "Error al inicializar la pantalla.");
         return;
     }
 
-    // 2. Inicializar LVGL
-    lv_init();
-    ESP_LOGI(TAG, "LVGL initialized");
-
-    // Configurar el timer para el tick de LVGL
+    // 2. Configurar el timer para el tick de LVGL
     esp_timer_handle_t lv_tick_timer;
     const esp_timer_create_args_t lv_tick_timer_args = {
         .callback = &lv_tick_timer_cb,  // Callback para el timer
@@ -75,37 +45,16 @@ extern "C" void app_main(void) {
     ESP_ERROR_CHECK(esp_timer_start_periodic(lv_tick_timer, 1000)); // Cada 1ms
     ESP_LOGI(TAG, "LVGL tick timer configured");
 
-    // 3. Configurar buffers de pantalla
-    buf1 = (lv_color_t*)heap_caps_malloc(SCREEN_WIDTH * 40 * sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
-    assert(buf1);
-    buf2 = (lv_color_t*)heap_caps_malloc(SCREEN_WIDTH * 40 * sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
-    assert(buf2);
-    ESP_LOGI(TAG, "Display buffers allocated");
-
-    // Initialize the LVGL draw buffers
-    lv_draw_buf_init(&draw_buf, SCREEN_WIDTH, 40, LV_COLOR_FORMAT_NATIVE, 0, buf1, SCREEN_WIDTH * 40 * sizeof(lv_color_t));
-
-    if (draw_buf.data == NULL) {
-        ESP_LOGE(TAG, "Error al inicializar draw buffer.");
-        return;
-    }
-
-    disp = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
-    lv_display_set_buffers(disp, buf1, buf2, SCREEN_WIDTH * 40 * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_PARTIAL);
-    lv_display_set_flush_cb(disp, disp_flush_cb);
-    ESP_LOGI(TAG, "LVGL display created and configured");
-
-    
-    // 4. Inicializar gestor de botones
+    // 3. Inicializar gestor de botones
     button_manager_init();
 
-    // 5. Crear vista inicial
+    // 4. Crear vista inicial
     lv_obj_t* initial_screen = create_clock_view(nullptr);
     switch_screen(initial_screen);
     ESP_LOGI(TAG, "Initial screen created and displayed");
 
     // --- Main Loop ---
-    ESP_LOGI(TAG, ANSI_COLOR_MAGENTA "Entering main loop" ANSI_COLOR_RESET);
+    ESP_LOGI(TAG,"Entering main loop");
     while (1) {
         lv_timer_handler();
         
@@ -119,10 +68,8 @@ extern "C" void app_main(void) {
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 
-    // 7. Limpieza
+    // 5. Limpieza
     clock_view_unregister_button_handlers();
     screen_deinit(screen);
-    free(buf1);
-    free(buf2);
     ESP_LOGI(TAG, "Application cleanup complete");
 }

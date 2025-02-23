@@ -113,8 +113,32 @@ screen_t* screen_init() {
     }
 
     screen_data.current_screen = nullptr;
+
+    screen_init_lvgl(screen); 
     ESP_LOGI(TAG, "Screen initialization complete");
     return screen;
+}
+
+void screen_init_lvgl(screen_t* screen) {
+    lv_init();
+    
+    // Configurar buffers
+    screen->lvgl_buf1 = (lv_color_t*)heap_caps_malloc(SCREEN_WIDTH * 40 * sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
+    screen->lvgl_buf2 = (lv_color_t*)heap_caps_malloc(SCREEN_WIDTH * 40 * sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
+    assert(screen->lvgl_buf1 && screen->lvgl_buf2);
+
+    lv_draw_buf_t draw_buf;
+    lv_draw_buf_init(&draw_buf, SCREEN_WIDTH, 40, LV_COLOR_FORMAT_NATIVE, 0, screen->lvgl_buf1, SCREEN_WIDTH * 40 * sizeof(lv_color_t));
+
+    screen->lvgl_disp = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
+    lv_display_set_buffers(screen->lvgl_disp, screen->lvgl_buf1, screen->lvgl_buf2, SCREEN_WIDTH * 40 * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_flush_cb(screen->lvgl_disp, [](lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
+        screen_t* s = (screen_t*)lv_display_get_user_data(disp);
+        esp_lcd_panel_draw_bitmap(s->panel_handle, area->x1, area->y1, area->x2 + 1, area->y2 + 1, (lv_color_t*)px_map);
+        lv_display_flush_ready(disp);
+    });
+    
+    lv_display_set_user_data(screen->lvgl_disp, screen);
 }
 
 void screen_deinit(screen_t* screen) {

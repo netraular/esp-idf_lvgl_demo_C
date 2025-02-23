@@ -10,8 +10,12 @@
 typedef struct {
     esp_lcd_panel_io_handle_t io_handle;
     esp_lcd_panel_handle_t panel_handle;
-    // disp_handle is no longer needed, as we manage the LVGL display directly
+    lv_display_t *lvgl_disp;    // Nuevo: display de LVGL
+    lv_color_t *lvgl_buf1;      // Nuevo: buffer 1
+    lv_color_t *lvgl_buf2;      // Nuevo: buffer 2
 } screen_t;
+
+void screen_init_lvgl(screen_t* screen);
 
 extern screen_t* screen_init();
 extern void screen_deinit(screen_t* screen);
