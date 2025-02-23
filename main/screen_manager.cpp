@@ -5,14 +5,45 @@
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 #include "esp_check.h"
+#include "esp_timer.h"
 
 static const char *TAG = "screen_manager";
+
+// Variable para el timer del tick de LVGL
+static esp_timer_handle_t lv_tick_timer = nullptr;
 
 typedef struct {
     lv_obj_t *current_screen;
 } screen_internal_data_t;
 
 static screen_internal_data_t screen_data;
+
+// Función para inicializar el timer de LVGL
+static void screen_init_lvgl_tick(screen_t* screen) {
+    const esp_timer_create_args_t lv_tick_timer_args = {
+        .callback = [](void* arg) {
+            lv_tick_inc(1);
+        },
+        .arg = nullptr,
+        .dispatch_method = ESP_TIMER_TASK,
+        .name = "lv_tick",
+        .skip_unhandled_events = true
+    };
+
+    ESP_ERROR_CHECK(esp_timer_create(&lv_tick_timer_args, &lv_tick_timer));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(lv_tick_timer, 1000));
+    ESP_LOGI(TAG, "LVGL tick timer initialized");
+}
+
+// Función para detener el timer
+static void screen_deinit_lvgl_tick() {
+    if (lv_tick_timer) {
+        esp_timer_stop(lv_tick_timer);
+        esp_timer_delete(lv_tick_timer);
+        lv_tick_timer = nullptr;
+        ESP_LOGI(TAG, "LVGL tick timer deinitialized");
+    }
+}
 
 screen_t* screen_init() {
     ESP_LOGI(TAG, "Initializing screen");
@@ -115,6 +146,7 @@ screen_t* screen_init() {
     screen_data.current_screen = nullptr;
 
     screen_init_lvgl(screen); 
+    screen_init_lvgl_tick(screen);  // Inicializar el timer de LVGL
     ESP_LOGI(TAG, "Screen initialization complete");
     return screen;
 }
@@ -143,6 +175,8 @@ void screen_init_lvgl(screen_t* screen) {
 
 void screen_deinit(screen_t* screen) {
     ESP_LOGI(TAG, "Deinitializing screen");
+    screen_deinit_lvgl_tick();  // Detener el timer de LVGL
+
     if (screen) {
         if (screen->panel_handle) {
             esp_lcd_panel_del(screen->panel_handle);
