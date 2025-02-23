@@ -15,14 +15,20 @@
 static const char *TAG = "main";
 
 
-static screen_t* screen; // From screen_manager
+// Declarar la variable global screen
+static screen_t* screen = nullptr;
+
+// Variables globales para los botones
+button_handle_t button1 = NULL;
+button_handle_t button4 = NULL;
+button_handle_t button2 = NULL;
+button_handle_t button3 = NULL;
 
 // LVGL display driver and draw buffer MUST be declared BEFORE disp_flush_cb
 static lv_display_t * disp;
 static lv_draw_buf_t draw_buf;
 static lv_color_t *buf1;
 static lv_color_t *buf2;
-button_handle_t button4 = NULL;
 
 // LVGL flush callback
 static void disp_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
@@ -38,11 +44,6 @@ static void disp_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px
         esp_lcd_panel_draw_bitmap(panel_handle, area->x1, area->y1, area->x2 + 1, area->y2 + 1, color_p);
     }
     lv_display_flush_ready(disp);
-}
-
-// Button event handler
-static void button_single_click_handler(void *arg,void *usr_data) {
-    ESP_LOGI(TAG, "[DEBUG] Botón presionado!");
 }
 
 // Timer callback para el tick de LVGL
@@ -104,20 +105,45 @@ extern "C" void app_main(void) {
         .short_press_time = 0,
     };
 
-    const button_gpio_config_t btn_gpio_cfg = {
-        .gpio_num = 4,
+    // Configuración del botón 4
+    const button_gpio_config_t btn_gpio_cfg_4 = {
+        .gpio_num = BUTTON_4_PIN,
         .active_level = 0,
         .enable_power_save = false,
         .disable_pull = false,
     };
+    ESP_ERROR_CHECK(iot_button_new_gpio_device(&btn_config, &btn_gpio_cfg_4, &button4));
 
-    button_handle_t button4 = NULL;
-    esp_err_t ret = iot_button_new_gpio_device(&btn_config, &btn_gpio_cfg, &button4);
-    ret = iot_button_register_cb(button4, BUTTON_SINGLE_CLICK, NULL, button_single_click_handler, NULL);
-    if (ret != ESP_OK) {
-        ESP_LOGE("BUTTON", "Error al registrar el callback del botón");
-    }
-    ESP_LOGI(TAG, "Button configured and callback registered");
+
+    // Configuración del botón 3
+    const button_gpio_config_t btn_gpio_cfg_3 = {
+        .gpio_num = BUTTON_3_PIN,
+        .active_level = 0,
+        .enable_power_save = false,
+        .disable_pull = false,
+    };
+    ESP_ERROR_CHECK(iot_button_new_gpio_device(&btn_config, &btn_gpio_cfg_3, &button3));
+
+    
+    // Configuración del botón 2
+    const button_gpio_config_t btn_gpio_cfg_2 = {
+        .gpio_num = BUTTON_2_PIN,
+        .active_level = 0,
+        .enable_power_save = false,
+        .disable_pull = false,
+    };
+    ESP_ERROR_CHECK(iot_button_new_gpio_device(&btn_config, &btn_gpio_cfg_2, &button2));
+
+    // Configuración del botón 1
+    const button_gpio_config_t btn_gpio_cfg_1 = {
+        .gpio_num = BUTTON_1_PIN,
+        .active_level = 0,
+        .enable_power_save = false,
+        .disable_pull = false,
+    };
+    ESP_ERROR_CHECK(iot_button_new_gpio_device(&btn_config, &btn_gpio_cfg_1, &button1));
+
+    ESP_LOGI(TAG, "Buttons configured");
 
     // Create and display the initial screen
     lv_obj_t* initial_screen = create_clock_view(nullptr);
@@ -145,6 +171,15 @@ extern "C" void app_main(void) {
     screen_deinit(screen);
     if (button4) {
         iot_button_delete(button4);
+    }
+    if (button3) {
+        iot_button_delete(button3);
+    }
+    if (button2) {
+        iot_button_delete(button2);
+    }
+    if (button1) {
+        iot_button_delete(button1);
     }
     free(buf1);
     free(buf2);

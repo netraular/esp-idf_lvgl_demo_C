@@ -136,14 +136,25 @@ void screen_deinit(screen_t* screen) {
 void switch_screen(lv_obj_t* new_screen) {
     ESP_LOGI(TAG, "Switching screen. Current: %p, New: %p", screen_data.current_screen, new_screen);
     
+    // Limpiar vista actual antes de cambiar
     if (screen_data.current_screen) {
-        ESP_LOGI(TAG, "Deleting old screen: %p", screen_data.current_screen);
+        // Enviar evento de eliminación a la pantalla actual
+        lv_obj_send_event(screen_data.current_screen, LV_EVENT_DELETE, NULL);
+        
+        // Eliminar la pantalla actual
         lv_obj_del(screen_data.current_screen);
+        ESP_LOGI(TAG, "Old screen deleted: %p", screen_data.current_screen);
     }
     
+    // Asignar la nueva pantalla
     if (new_screen) {
         screen_data.current_screen = new_screen;
         ESP_LOGI(TAG, "Loading new screen: %p", new_screen);
+        
+        // Cargar la nueva pantalla en el display
         lv_disp_load_scr(new_screen);
+    } else {
+        screen_data.current_screen = nullptr;
+        ESP_LOGI(TAG, "No new screen provided, current screen set to nullptr");
     }
 }

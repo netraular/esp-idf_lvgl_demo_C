@@ -16,8 +16,9 @@
 // Pines de los botones (¡ya no se usan, pero los dejamos como ejemplo!)
 // Usa GPIO_NUM_x para los pines de los botones
 #define BUTTON_4_PIN GPIO_NUM_4
-#define BUTTON_2_PIN GPIO_NUM_5
-#define BUTTON_3_PIN GPIO_NUM_6
+#define BUTTON_3_PIN GPIO_NUM_5
+#define BUTTON_2_PIN GPIO_NUM_6
+#define BUTTON_1_PIN GPIO_NUM_7
 
 // Resolución de la pantalla
 #define SCREEN_WIDTH  240
