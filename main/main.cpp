@@ -131,7 +131,7 @@ extern "C" void app_main(void) {
 
     const button_gpio_config_t btn_gpio_cfg = {
         .gpio_num = 4,
-        .active_level = 1,
+        .active_level = 0,
         .enable_power_save = false,
         .disable_pull = false,
     };
@@ -153,7 +153,6 @@ extern "C" void app_main(void) {
     #define ANSI_COLOR_MAGENTA "\x1b[35m" // Lila/Magenta
     #define ANSI_COLOR_RESET   "\x1b[0m"  // Resetear a los colores por defecto
     ESP_LOGI(TAG, ANSI_COLOR_MAGENTA "Entering main loop" ANSI_COLOR_RESET);
-    ESP_LOGI(TAG, "Entering main loop");
     while (1) {
         lv_timer_handler();
         
