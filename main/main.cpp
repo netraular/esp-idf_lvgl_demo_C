@@ -4,8 +4,6 @@
 #include "esp_log.h"
 #include "lvgl.h"
 #include "screen_manager.h"
-#include "views/color_grid_view.h"
-#include "views/countdown_view.h"
 #include "views/clock_view.h"
 #include "config.h"
 #include "iot_button.h"
@@ -16,13 +14,7 @@
 
 static const char *TAG = "main";
 
-typedef enum {
-    VIEW_CLOCK,
-    VIEW_COLOR_GRID,
-    VIEW_COUNTDOWN,
-} app_view_t;
 
-static app_view_t current_view = VIEW_CLOCK;
 static screen_t* screen; // From screen_manager
 
 // LVGL display driver and draw buffer MUST be declared BEFORE disp_flush_cb
@@ -50,24 +42,7 @@ static void disp_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px
 
 // Button event handler
 static void button_single_click_handler(void *arg,void *usr_data) {
-    ESP_LOGI(TAG, "[DEBUG] Botón presionado! Estado actual: %d", current_view);
-
-	if (current_view == VIEW_CLOCK) {
-		ESP_LOGI(TAG, "Switching to COLOR GRID view");
-		current_view = VIEW_COLOR_GRID;
-		lv_obj_t* color_grid_scr = create_color_grid_view(nullptr);
-		switch_screen(color_grid_scr);
-	} else if (current_view == VIEW_COLOR_GRID) {
-		ESP_LOGI(TAG, "Switching to CLOCK view");
-		current_view = VIEW_CLOCK;
-		lv_obj_t* clock_scr = create_clock_view(nullptr);
-		switch_screen(clock_scr);
-	} else if (current_view == VIEW_COUNTDOWN) {
-		//Si se desea hacer algo diferente al pulsar el botón
-        // desde la vista de countdown
-	}
-
-	ESP_LOGI(TAG, "New current view: %d", current_view);
+    ESP_LOGI(TAG, "[DEBUG] Botón presionado!");
 }
 
 // Timer callback para el tick de LVGL
