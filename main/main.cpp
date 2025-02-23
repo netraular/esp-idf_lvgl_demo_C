@@ -6,21 +6,23 @@
 #include "screen_manager.h"
 #include "views/color_grid_view.h"
 #include "views/countdown_view.h"
+#include "views/clock_view.h"
 #include "config.h"
 #include "iot_button.h"
 #include "esp_lcd_types.h"
 #include "esp_check.h"
 #include "button_gpio.h"
-#include "esp_timer.h"  // Añadido para el tick de LVGL
+#include "esp_timer.h"
 
 static const char *TAG = "main";
 
 typedef enum {
+    VIEW_CLOCK,
     VIEW_COLOR_GRID,
     VIEW_COUNTDOWN,
 } app_view_t;
 
-static app_view_t current_view = VIEW_COLOR_GRID;
+static app_view_t current_view = VIEW_CLOCK;
 static screen_t* screen; // From screen_manager
 
 // LVGL display driver and draw buffer MUST be declared BEFORE disp_flush_cb
@@ -49,20 +51,23 @@ static void disp_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px
 // Button event handler
 static void button_single_click_handler(void *arg,void *usr_data) {
     ESP_LOGI(TAG, "[DEBUG] Botón presionado! Estado actual: %d", current_view);
-    
-    if (current_view == VIEW_COLOR_GRID) {
-        ESP_LOGI(TAG, "Switching to COUNTDOWN view");
-        current_view = VIEW_COUNTDOWN;
-        lv_obj_t* countdown_scr = create_countdown_view(nullptr);
-        switch_screen(countdown_scr);
-    } else if (current_view == VIEW_COUNTDOWN) {
-        ESP_LOGI(TAG, "Switching to COLOR GRID view");
-        current_view = VIEW_COLOR_GRID;
-        lv_obj_t* color_grid_scr = create_color_grid_view(nullptr);
-        switch_screen(color_grid_scr);
-    }
-    
-    ESP_LOGI(TAG, "New current view: %d", current_view);
+
+	if (current_view == VIEW_CLOCK) {
+		ESP_LOGI(TAG, "Switching to COLOR GRID view");
+		current_view = VIEW_COLOR_GRID;
+		lv_obj_t* color_grid_scr = create_color_grid_view(nullptr);
+		switch_screen(color_grid_scr);
+	} else if (current_view == VIEW_COLOR_GRID) {
+		ESP_LOGI(TAG, "Switching to CLOCK view");
+		current_view = VIEW_CLOCK;
+		lv_obj_t* clock_scr = create_clock_view(nullptr);
+		switch_screen(clock_scr);
+	} else if (current_view == VIEW_COUNTDOWN) {
+		//Si se desea hacer algo diferente al pulsar el botón
+        // desde la vista de countdown
+	}
+
+	ESP_LOGI(TAG, "New current view: %d", current_view);
 }
 
 // Timer callback para el tick de LVGL
@@ -140,11 +145,14 @@ extern "C" void app_main(void) {
     ESP_LOGI(TAG, "Button configured and callback registered");
 
     // Create and display the initial screen
-    lv_obj_t* initial_screen = create_color_grid_view(nullptr);
+    lv_obj_t* initial_screen = create_clock_view(nullptr);
     switch_screen(initial_screen);
     ESP_LOGI(TAG, "Initial screen created and displayed");
 
     // --- Main Loop ---
+    #define ANSI_COLOR_MAGENTA "\x1b[35m" // Lila/Magenta
+    #define ANSI_COLOR_RESET   "\x1b[0m"  // Resetear a los colores por defecto
+    ESP_LOGI(TAG, ANSI_COLOR_MAGENTA "Entering main loop" ANSI_COLOR_RESET);
     ESP_LOGI(TAG, "Entering main loop");
     while (1) {
         lv_timer_handler();
