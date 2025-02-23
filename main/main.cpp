@@ -11,6 +11,7 @@
 #include "esp_lcd_types.h"
 #include "esp_check.h"
 #include "button_gpio.h"
+#include "esp_timer.h"  // Añadido para el tick de LVGL
 
 static const char *TAG = "main";
 
@@ -64,6 +65,11 @@ static void button_single_click_handler(void *arg,void *usr_data) {
     ESP_LOGI(TAG, "New current view: %d", current_view);
 }
 
+// Timer callback para el tick de LVGL
+static void lv_tick_timer_cb(void *arg) {
+    lv_tick_inc(1); // Actualizar el tick de LVGL cada 1ms
+}
+
 extern "C" void app_main(void) {
     ESP_LOGI(TAG, "Starting application");
 
@@ -77,6 +83,20 @@ extern "C" void app_main(void) {
     // --- LVGL Initialization ---
     lv_init();
     ESP_LOGI(TAG, "LVGL initialized");
+
+    // Configurar el timer para el tick de LVGL
+    esp_timer_handle_t lv_tick_timer;
+    const esp_timer_create_args_t lv_tick_timer_args = {
+        .callback = &lv_tick_timer_cb,  // Callback para el timer
+        .arg = nullptr,                 // Argumento para el callback (no se usa)
+        .dispatch_method = ESP_TIMER_TASK, // Método de despacho (usar la tarea de timer)
+        .name = "lv_tick",              // Nombre del timer
+        .skip_unhandled_events = true   // Ignorar eventos no manejados
+    };
+
+    ESP_ERROR_CHECK(esp_timer_create(&lv_tick_timer_args, &lv_tick_timer));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(lv_tick_timer, 1000)); // Cada 1ms
+    ESP_LOGI(TAG, "LVGL tick timer configured");
 
     // Buffer allocation (double buffering)
     buf1 = (lv_color_t*)heap_caps_malloc(SCREEN_WIDTH * 40 * sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);

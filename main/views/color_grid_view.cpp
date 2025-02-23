@@ -23,23 +23,24 @@ static const struct ColorInfo palette_colors[] = {
 };
 
 // Variables globales para el contador y el timer
-static std::atomic<int> current_number(0); // Contador atómico
+static std::atomic<int> current_number(10); // Iniciar en 10
 static lv_timer_t *timer = nullptr;        // Puntero al timer
 static lv_obj_t *number_label = nullptr;   // Label para mostrar el número
 
-// Timer callback para incrementar el número
+// Timer callback para decrementar el número
 static void increment_number_task(lv_timer_t *t) {
-    current_number++;
-    ESP_LOGI(TAG, "[DEBUG] Timer callback ejecutado. Nuevo valor: %d", current_number.load()); // Log detallado
+    current_number--;
+    ESP_LOGI(TAG, "[DEBUG] Timer callback ejecutado. Nuevo valor: %d", current_number.load());
     
-    // Actualizar solo si el label existe
-    if (number_label) {
-        lv_label_set_text_fmt(number_label, "%d", current_number.load());
-        ESP_LOGD(TAG, "Label actualizado a %d", current_number.load());
-        lv_refr_now(nullptr); // Forzar refresco de pantalla
-        ESP_LOGD(TAG, "Pantalla refrescada");
+    if (current_number >= 0) {
+        if (number_label) {
+            lv_label_set_text_fmt(number_label, "%d", current_number.load());
+            lv_refr_now(nullptr); // Forzar refresco de pantalla
+        }
     } else {
-        ESP_LOGW(TAG, "Label no existe");
+        lv_timer_del(t);
+        timer = nullptr;
+        ESP_LOGI(TAG, "Countdown terminado");
     }
 }
 
@@ -48,7 +49,6 @@ lv_obj_t* create_color_grid_view(lv_obj_t* parent) {
 
     // Eliminar timer anterior si existe
     if (timer) {
-        ESP_LOGW(TAG, "Timer anterior eliminado: %p", timer);
         lv_timer_del(timer);
         timer = nullptr;
     }
@@ -89,7 +89,7 @@ lv_obj_t* create_color_grid_view(lv_obj_t* parent) {
     // Reiniciar el contador solo si es la primera vez
     static bool first_init = true;
     if (first_init) {
-        current_number = 0;
+        current_number = 10;
         first_init = false;
     }
 
