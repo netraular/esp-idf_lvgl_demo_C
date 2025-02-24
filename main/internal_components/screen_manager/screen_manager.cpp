@@ -1,4 +1,4 @@
-#include "./internal_components/screen_manager/screen_manager.h"
+#include "internal_components/screen_manager/screen_manager.h"
 #include "config.h"
 #include "esp_err.h"
 #include "esp_log.h"
