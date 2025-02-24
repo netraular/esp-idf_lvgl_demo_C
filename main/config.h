@@ -13,7 +13,6 @@
 #define TFT_RST   GPIO_NUM_14
 #define TFT_BL    GPIO_NUM_8
 
-// Pines de los botones (¡ya no se usan, pero los dejamos como ejemplo!)
 // Usa GPIO_NUM_x para los pines de los botones
 #define BUTTON_4_PIN GPIO_NUM_4
 #define BUTTON_3_PIN GPIO_NUM_5

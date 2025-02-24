@@ -3,8 +3,7 @@
 
 #include "lvgl.h"
 
-lv_obj_t* create_clock_view(lv_obj_t* parent);
-void clock_view_register_button_handlers();
-void clock_view_unregister_button_handlers();
+lv_obj_t* create_clock_view();
+void destroy_clock_view(); // Nueva función para eliminar la vista correctamente
 
 #endif
