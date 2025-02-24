@@ -5,4 +5,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+
 project(template-app)
+
+set(EXTRA_COMPONENT_DIRS "main/internal_components" "main/views/apps")

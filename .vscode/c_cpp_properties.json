@@ -7,12 +7,14 @@
             "includePath": [
                 "${config:idf.espIdfPath}/components/**",
                 "${config:idf.espIdfPathWin}/components/**",
+                "${workspaceFolder}/main/views/**",
                 "${workspaceFolder}/**"
             ],
             "browse": {
                 "path": [
-                    "${config:idf.espIdfPath}/components",
+                    "${config:idf.espIdfPath}/components/**",
                     "${config:idf.espIdfPathWin}/components",
+                    "${workspaceFolder}/main/views",
                     "${workspaceFolder}"
                 ],
                 "limitSymbolsToIncludedHeaders": true

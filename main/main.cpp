@@ -3,10 +3,10 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "lvgl.h"
-#include "screen_manager.h"
-#include "views/clock_view.h"
+#include "./internal_components/screen_manager/screen_manager.h"
+#include "./views/apps/clock/clock_view.h"
 #include "config.h"
-#include "button_manager.h"
+#include "./internal_components/button_manager/button_manager.h"
 #include "esp_lcd_types.h"
 #include "esp_check.h"
 

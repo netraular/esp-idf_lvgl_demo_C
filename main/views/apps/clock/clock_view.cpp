@@ -1,7 +1,7 @@
 #include "clock_view.h"
 #include <atomic>
 #include <cmath>
-#include "button_manager.h"
+#include "internal_components/button_manager/button_manager.h"
 #include "esp_log.h"
 
 static const char *TAG = "CLOCK";
