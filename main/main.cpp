@@ -3,20 +3,20 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "lvgl.h"
-#include "internal_components/screen_manager/screen_manager.h"
+#include "controllers/screen_manager/screen_manager.h"
 #include "views/apps/clock/clock_view.h"
 #include "config.h"
-#include "internal_components/button_manager/button_manager.h"
+#include "controllers/button_manager/button_manager.h"
 #include "esp_lcd_types.h"
 #include "esp_check.h"
 
 static const char *TAG = "main";
 
-// Declarar la variable global screen
-static screen_t* screen = nullptr;
 
 extern "C" void app_main(void) {
     ESP_LOGI(TAG, "Starting application");
+
+    static screen_t* screen = nullptr;
 
     // 1. Inicializar pantalla (esto ahora incluye la inicialización de LVGL)
     screen = screen_init();

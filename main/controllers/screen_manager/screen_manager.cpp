@@ -1,4 +1,4 @@
-#include "internal_components/screen_manager/screen_manager.h"
+#include "controllers/screen_manager/screen_manager.h"
 #include "config.h"
 #include "esp_err.h"
 #include "esp_log.h"
@@ -117,7 +117,7 @@ screen_t* screen_init() {
     ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(screen->io_handle, &panel_config, &screen->panel_handle));
     ESP_LOGI(TAG, "ST7789 panel initialized");
 
-    // 4. Inicialización y encendido del panel (CORRECT ORDER)
+    // 4. Inicialización y encendido del panel
     esp_lcd_panel_reset(screen->panel_handle); // Hardware reset (pulse)
     ESP_ERROR_CHECK(esp_lcd_panel_init(screen->panel_handle));  // Initialize the controller
     ESP_LOGI(TAG, "Panel initialized");
@@ -161,7 +161,7 @@ void screen_init_lvgl(screen_t* screen) {
 
     lv_draw_buf_t draw_buf;
     lv_draw_buf_init(&draw_buf, SCREEN_WIDTH, 40, LV_COLOR_FORMAT_NATIVE, 0, screen->lvgl_buf1, SCREEN_WIDTH * 40 * sizeof(lv_color_t));
-
+    
     screen->lvgl_disp = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
     lv_display_set_buffers(screen->lvgl_disp, screen->lvgl_buf1, screen->lvgl_buf2, SCREEN_WIDTH * 40 * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_PARTIAL);
     lv_display_set_flush_cb(screen->lvgl_disp, [](lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {

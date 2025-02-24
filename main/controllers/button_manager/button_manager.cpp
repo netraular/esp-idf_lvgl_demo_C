@@ -1,4 +1,4 @@
-#include "internal_components/button_manager/button_manager.h"
+#include "controllers/button_manager/button_manager.h"
 #include "esp_log.h"
 #include <cassert>
 
