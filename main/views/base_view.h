@@ -20,7 +20,7 @@ public:
     lv_obj_t* get_screen() const { return screen; }
     std::string get_name() const { return name; }
 
-    static lv_obj_t* create_base_screen();
+    lv_obj_t* create_base_screen(); // Sin static
 };
 
 #endif

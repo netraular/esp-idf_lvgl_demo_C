@@ -1,4 +1,3 @@
-
 #include "lvgl.h"
 #include "clock_view.h"
 #include <atomic>
@@ -15,10 +14,12 @@ const int CELL_SIZE = 10;
 const int CELL_SPACING = 3;
 const int CELL_RADIUS = 3;
 
-static ClockView* clockInstance = nullptr;
+// Declaración de la instancia estática (para el Singleton)
+ClockView* ClockView::instance = nullptr;
 
-ClockView::ClockView() : BaseView("Clock"), time_label(nullptr), grid(nullptr), grid_cells(), timer(nullptr),hours(12), minutes(0), seconds(0) {
-    clockInstance = this; // Guardar instancia globalmente
+ClockView::ClockView() : BaseView("Clock"), time_label(nullptr), grid(nullptr), grid_cells(), timer(nullptr),
+                        hours(12), minutes(0), seconds(0)
+{
     // Crear grid
     grid = lv_obj_create(screen);
     int grid_width = GRID_COLS * (CELL_SIZE + CELL_SPACING) - CELL_SPACING + 27;
@@ -27,7 +28,7 @@ ClockView::ClockView() : BaseView("Clock"), time_label(nullptr), grid(nullptr), 
     lv_obj_align(grid, LV_ALIGN_CENTER, 0, -40);
     lv_obj_clear_flag(grid, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(grid, lv_color_hex(0xDDDDDD), LV_PART_MAIN);
-    
+
     this->create_grid_cells();
 
     // Crear label de tiempo
@@ -39,8 +40,16 @@ ClockView::ClockView() : BaseView("Clock"), time_label(nullptr), grid(nullptr), 
     timer = lv_timer_create(update_time_task, 1000, this);
 }
 
+
+ClockView* ClockView::get_instance() {
+    if (instance == nullptr) {
+        instance = new ClockView();
+    }
+    return instance;
+}
+
 ClockView::~ClockView() {
-    destroy();
+    // La limpieza se hace en destroy().
 }
 
 void ClockView::destroy() {
@@ -48,19 +57,22 @@ void ClockView::destroy() {
         lv_timer_del(timer);
         timer = nullptr;
     }
-    BaseView::destroy();
+    if (instance != nullptr) {
+        instance = nullptr; //Importante para que el singleton funcione
+    }
+    BaseView::destroy(); // Llamar a la clase base.
 }
 
 void ClockView::create_grid_cells() {
     grid_cells.resize(GRID_ROWS, std::vector<lv_obj_t*>(GRID_COLS));
-    
+
     for (int i = 0; i < GRID_ROWS; i++) {
         for (int j = 0; j < GRID_COLS; j++) {
             lv_obj_t* cell = lv_obj_create(grid);
             lv_obj_set_size(cell, CELL_SIZE, CELL_SIZE);
             lv_obj_align(cell, LV_ALIGN_TOP_LEFT,
-                        j * (CELL_SIZE + CELL_SPACING),
-                        i * (CELL_SIZE + CELL_SPACING));
+                         j * (CELL_SIZE + CELL_SPACING),
+                         i * (CELL_SIZE + CELL_SPACING));
             lv_obj_set_style_bg_color(cell, lv_color_white(), LV_PART_MAIN);
             lv_obj_set_style_border_width(cell, 1, LV_PART_MAIN);
             lv_obj_set_style_border_color(cell, lv_color_black(), LV_PART_MAIN);
@@ -71,61 +83,65 @@ void ClockView::create_grid_cells() {
 }
 
 void ClockView::update_grid_animation() {
-    static int cell_count = 0;
-
-    if (cell_count >= GRID_ROWS * GRID_COLS) {
+    // Limpiar la cuadrícula si estamos al principio de un nuevo minuto (seconds == 0).
+    if (seconds == 0) {
         for (auto& row : grid_cells) {
             for (auto& cell : row) {
                 lv_obj_set_style_bg_color(cell, lv_color_white(), LV_PART_MAIN);
             }
         }
-        cell_count = 0;
     }
 
-    int row = cell_count / GRID_COLS;
-    int col = cell_count % GRID_COLS;
-    lv_color_t color = lv_color_make(rand() % 256, rand() % 256, rand() % 256);
-    lv_obj_set_style_bg_color(grid_cells[row][col], color, LV_PART_MAIN);
-    cell_count++;
+    // Encender el cuadrado actual (basado en seconds).
+     if (seconds > 0 && seconds < GRID_ROWS * GRID_COLS) { // Ya no se ilumina el cuadrado 0
+        int row = (seconds % (GRID_ROWS * GRID_COLS)) / GRID_COLS;
+        int col = (seconds % (GRID_ROWS * GRID_COLS)) % GRID_COLS;
+        //Color aleatorio, pero se puede usar un color fijo:
+        lv_color_t color = lv_color_make(rand() % 256, rand() % 256, rand() % 256);
+
+        //Comprobación de seguridad
+        if(row < GRID_ROWS && col < GRID_COLS)
+            lv_obj_set_style_bg_color(grid_cells[row][col], color, LV_PART_MAIN);
+    }
 }
 
 void ClockView::update_time_task(lv_timer_t*) {
-    if (!clockInstance) return;
+    // Ya no es necesario verificar la instancia
 
-    clockInstance->seconds++;
-    if (clockInstance->seconds >= 60) {
-        clockInstance->seconds = 0;
-        clockInstance->minutes++;
-        if (clockInstance->minutes >= 60) {
-            clockInstance->minutes = 0;
-            clockInstance->hours++;
-            if (clockInstance->hours >= 24) {
-                clockInstance->hours = 0;
+    instance->seconds++;
+    if (instance->seconds >= 60) {
+        instance->seconds = 0;
+        instance->minutes++;
+        if (instance->minutes >= 60) {
+            instance->minutes = 0;
+            instance->hours++;
+            if (instance->hours >= 24) {
+                instance->hours = 0;
             }
         }
     }
 
-    if (clockInstance->time_label) {
-        lv_label_set_text_fmt(clockInstance->time_label, "%02d:%02d:%02d",
-                              clockInstance->hours.load(), 
-                              clockInstance->minutes.load(), 
-                              clockInstance->seconds.load());
+    if (instance->time_label) {
+        lv_label_set_text_fmt(instance->time_label, "%02d:%02d:%02d",
+                              instance->hours.load(),
+                              instance->minutes.load(),
+                              instance->seconds.load());
     }
 
-    clockInstance->update_grid_animation();
+    instance->update_grid_animation();  // Llama a update_grid_animation
 }
 
 
 void ClockView::register_button_handlers() {
-    button_manager_register_view_handler(BUTTON_1, [](){
+    button_manager_register_view_handler(BUTTON_1, []() {
         ESP_LOGI(TAG, "Botón 1 - Modo Reloj");
     });
-    
-    button_manager_register_view_handler(BUTTON_3, [](){
+
+    button_manager_register_view_handler(BUTTON_3, []() {
         ESP_LOGI(TAG, "Botón 3 - Cambiar Color");
     });
-    
-    button_manager_register_view_handler(BUTTON_4, [](){
+
+    button_manager_register_view_handler(BUTTON_4, []() {
         ESP_LOGI(TAG, "Botón 4 - Ir a Settings");
         switch_screen("Settings");
     });

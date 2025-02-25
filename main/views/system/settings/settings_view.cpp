@@ -15,15 +15,15 @@ SettingsView::SettingsView() : BaseView("Settings"), label(nullptr) {
 }
 
 SettingsView::~SettingsView() {
-    destroy();
+     destroy(); // Llamada a destroy.
 }
 
 void SettingsView::register_button_handlers() {
-    button_manager_register_view_handler(BUTTON_1, [](){
+    button_manager_register_view_handler(BUTTON_1, []() {
         switch_screen("Clock");
     });
-    
-    button_manager_register_view_handler(BUTTON_2, [](){
+
+    button_manager_register_view_handler(BUTTON_2, []() {
         switch_screen("System Info");
     });
 }

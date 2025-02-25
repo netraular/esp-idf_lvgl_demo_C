@@ -13,11 +13,9 @@
 #include "views/system/settings/settings_view.h"
 #include "views/system/system_info/system_info_view.h"
 
-static const char *TAG = "SCREEN_MGR";
+static const char* TAG = "SCREEN_MGR";
 
 static esp_timer_handle_t lv_tick_timer = nullptr;
-static std::vector<BaseView*> registered_views;
-static BaseView* current_view = nullptr;
 
 static void screen_init_lvgl_tick() {
     const esp_timer_create_args_t lv_tick_timer_args = {
@@ -49,7 +47,7 @@ screen_t* screen_init() {
         ESP_LOGE(TAG, "Memory allocation failed for screen");
         return nullptr;
     }
-    
+
     // Configuración SPI
     spi_bus_config_t buscfg = {
         .mosi_io_num = TFT_MOSI,
@@ -71,8 +69,7 @@ screen_t* screen_init() {
     // Asignar los valores faltantes en una segunda etapa
     buscfg.data_io_default_level = 0;
     buscfg.isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO;
-    
-    
+
     ESP_ERROR_CHECK(spi_bus_initialize(LCD_HOST, &buscfg, SPI_DMA_CH_AUTO));
 
     // Configuración panel IO
@@ -123,93 +120,81 @@ screen_t* screen_init() {
     esp_lcd_panel_disp_on_off(screen->panel_handle, true);
 
     // Backlight
-    if (TFT_BL >= 0) {
-        gpio_config_t bk_gpio_config = {
-            .pin_bit_mask = 1ULL << TFT_BL,
-            .mode = GPIO_MODE_OUTPUT,
-            .pull_up_en = GPIO_PULLUP_DISABLE,
-            .pull_down_en = GPIO_PULLDOWN_DISABLE,
-            .intr_type = GPIO_INTR_DISABLE
-        };
-        ESP_ERROR_CHECK(gpio_config(&bk_gpio_config));
-        gpio_set_level(TFT_BL, EXAMPLE_LCD_BK_LIGHT_ON_LEVEL);
-    }
+      gpio_config_t bk_gpio_config = {
+        .pin_bit_mask = 1ULL << TFT_BL,
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE, // Inicializar
+        .pull_down_en = GPIO_PULLDOWN_DISABLE, // Inicializar
+        .intr_type = GPIO_INTR_DISABLE // Inicializar
+    };
+    ESP_ERROR_CHECK(gpio_config(&bk_gpio_config));
+    gpio_set_level(TFT_BL, EXAMPLE_LCD_BK_LIGHT_ON_LEVEL);
 
     // Inicializar LVGL
     screen_init_lvgl(screen);
     screen_init_lvgl_tick();
-    
+
     return screen;
 }
 
 void screen_init_lvgl(screen_t* screen) {
     lv_init();
 
-    // Buffers DMA
+    // Configura LVGL para usar memoria personalizada (opcional, pero recomendado)
+#if LV_MEM_CUSTOM == 1
+    lv_mem_init(screen->lvgl_buf1, SCREEN_WIDTH * 40 * sizeof(lv_color_t));
+    lv_mem_init(screen->lvgl_buf2, SCREEN_WIDTH * 40 * sizeof(lv_color_t));
+#else
+    // Buffers DMA (si LV_MEM_CUSTOM no está habilitado)
     screen->lvgl_buf1 = (lv_color_t*)heap_caps_malloc(SCREEN_WIDTH * 40 * sizeof(lv_color_t), MALLOC_CAP_DMA);
     screen->lvgl_buf2 = (lv_color_t*)heap_caps_malloc(SCREEN_WIDTH * 40 * sizeof(lv_color_t), MALLOC_CAP_DMA);
     assert(screen->lvgl_buf1 && screen->lvgl_buf2);
+#endif
 
     // Configurar display LVGL
     screen->lvgl_disp = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
-    lv_display_set_buffers(screen->lvgl_disp, screen->lvgl_buf1, screen->lvgl_buf2, 
+    lv_display_set_buffers(screen->lvgl_disp, screen->lvgl_buf1, screen->lvgl_buf2,
                           SCREEN_WIDTH * 40 * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_PARTIAL);
-    
+
     // Callback de refresco
-    lv_display_set_flush_cb(screen->lvgl_disp, [](lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
+    lv_display_set_flush_cb(screen->lvgl_disp, [](lv_display_t* disp, const lv_area_t* area, uint8_t* px_map) {
         screen_t* s = (screen_t*)lv_display_get_user_data(disp);
         esp_lcd_panel_draw_bitmap(s->panel_handle, area->x1, area->y1, area->x2 + 1, area->y2 + 1, (lv_color_t*)px_map);
         lv_display_flush_ready(disp);
     });
-    
+
     lv_display_set_user_data(screen->lvgl_disp, screen);
 }
 
 void screen_deinit(screen_t* screen) {
     ESP_LOGI(TAG, "Deinitializing screen");
-    
+
     screen_deinit_lvgl_tick();
-    
+
     if (screen) {
         if (screen->panel_handle) esp_lcd_panel_del(screen->panel_handle);
         if (screen->io_handle) esp_lcd_panel_io_del(screen->io_handle);
+#if LV_MEM_CUSTOM != 1
         if (screen->lvgl_buf1) free(screen->lvgl_buf1);
         if (screen->lvgl_buf2) free(screen->lvgl_buf2);
+#endif
         delete screen;
     }
-}
-
-void register_view(BaseView* view) {
-    if (view) {
-        registered_views.push_back(view);
-        ESP_LOGI(TAG, "View registered: %s", view->get_name().c_str());
-    }
-}
-
-BaseView* get_view(const std::string& name) {
-    for (BaseView* view : registered_views) {
-        if (view->get_name() == name) {
-            return view;
-        }
-    }
-    ESP_LOGW(TAG, "View not found: %s", name.c_str());
-    return nullptr;
 }
 
 void switch_screen(const std::string& view_name) {
     ESP_LOGI(TAG, "Switching to view: %s", view_name.c_str());
 
-    // Limpiar vista actual
-    if (current_view) {
-        current_view->unregister_button_handlers();
-        delete current_view;
-        current_view = nullptr;
+     // Destruir la vista actual (si existe y no es ClockView la que se va a mostrar)
+    if (view_name != "Clock") {
+        ClockView::get_instance()->destroy(); // Usa :: para acceder a miembros estáticos.
     }
 
-    // Crear nueva vista
+
+    // Crear y mostrar la nueva vista
     BaseView* new_view = nullptr;
     if (view_name == "Clock") {
-        new_view = new ClockView();
+        new_view = ClockView::get_instance();  // Usa :: para acceder a miembros estáticos.
     } else if (view_name == "Boot") {
         new_view = new BootView();
     } else if (view_name == "Settings") {
@@ -222,17 +207,7 @@ void switch_screen(const std::string& view_name) {
     }
 
     if (new_view) {
-        current_view = new_view;
-        current_view->register_button_handlers();
-        lv_disp_load_scr(current_view->get_screen());
-        register_view(current_view);
-    }
-}
-
-void destroy_current_view() {
-    if (current_view) {
-        current_view->destroy();
-        delete current_view;
-        current_view = nullptr;
+        new_view->register_button_handlers();
+        lv_disp_load_scr(new_view->get_screen());
     }
 }

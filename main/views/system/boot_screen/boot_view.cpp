@@ -21,6 +21,7 @@ BootView::BootView() : BaseView("Boot"), label(nullptr), timer(nullptr) {
 BootView::~BootView() {
     if (timer) {
         lv_timer_del(timer);
+        timer = nullptr; // Añadido para consistencia
     }
-    destroy();
+    destroy(); // Llamada a destroy()
 }

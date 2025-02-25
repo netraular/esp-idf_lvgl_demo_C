@@ -1,10 +1,11 @@
+// main/views/apps/clock/clock_view.h
 #ifndef CLOCK_VIEW_H
 #define CLOCK_VIEW_H
 
 #include "../../base_view.h"
 #include <atomic>
 #include <vector>
-#include "lvgl.h" 
+#include "lvgl.h"
 
 class ClockView : public BaseView {
 private:
@@ -16,15 +17,18 @@ private:
     std::atomic<int> minutes;
     std::atomic<int> seconds;
 
-    // Declaraciones añadidas
     void create_grid_cells();
     void update_grid_animation();
     static void update_time_task(lv_timer_t* t);
 
-public:
-    ClockView();
-    virtual ~ClockView();
+    // Para el patrón Singleton
+    static ClockView* instance;
+    ClockView(); // Constructor privado
 
+public:
+    // Método estático para obtener la instancia (Singleton)
+    static ClockView* get_instance();
+    virtual ~ClockView();
     void register_button_handlers() override;
     void unregister_button_handlers() override;
     void destroy() override;

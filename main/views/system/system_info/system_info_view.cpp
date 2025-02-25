@@ -15,11 +15,11 @@ SystemInfoView::SystemInfoView() : BaseView("System Info"), label(nullptr) {
 }
 
 SystemInfoView::~SystemInfoView() {
-    destroy();
+    destroy(); // Llamada a destroy.
 }
 
 void SystemInfoView::register_button_handlers() {
-    button_manager_register_view_handler(BUTTON_3, [](){
+    button_manager_register_view_handler(BUTTON_3, []() {
         switch_screen("Settings");
     });
 }

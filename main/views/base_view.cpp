@@ -6,11 +6,12 @@ BaseView::BaseView(const std::string& view_name) : name(view_name) {
 }
 
 BaseView::~BaseView() {
-    destroy();
+    // Ya no es necesario llamar a destroy() aquí,
+    // se llama explícitamente.
 }
 
 void BaseView::destroy() {
-    if(screen){
+    if (screen) {
         lv_obj_del(screen);
         screen = nullptr;
     }
