@@ -4,48 +4,37 @@
 #include "esp_log.h"
 #include "lvgl.h"
 #include "controllers/screen_manager/screen_manager.h"
-#include "views/apps/clock/clock_view.h"
-#include "views/system/boot_screen/boot_view.h"
-#include "views/system/settings/settings_view.h"
-#include "views/system/system_info/system_info_view.h"
 #include "config.h"
 #include "controllers/button_manager/button_manager.h"
-#include "esp_lcd_types.h"
-#include "esp_check.h"
-
 
 static const char *TAG = "main";
 
 extern "C" void app_main(void) {
-    ESP_LOGI(TAG, "Starting application");
-
-    static screen_t* screen = nullptr;
-
-    // Inicializar pantalla
-    screen = screen_init();
+    ESP_LOGI(TAG, "Iniciando aplicación");
+    
+    // 1. Inicialización de hardware
+    screen_t* screen = screen_init();
     if (!screen) {
-        ESP_LOGE(TAG, "Error al inicializar la pantalla.");
+        ESP_LOGE(TAG, "Fallo al inicializar pantalla");
         return;
     }
 
-    // Inicializar gestor de botones
     button_manager_init();
+    
+    // 2. Gestión inicial de vistas
+    switch_screen("Boot");
+    ESP_LOGI(TAG, "Vista Boot mostrada");
 
-    // Mostrar la vista de inicio (ya no es necesario crear las vistas aquí)
-    switch_screen("Boot"); // Mostrar la vista de inicio
-    ESP_LOGI(TAG, "Boot screen created and displayed");
-
-    // --- Main Loop ---
-    ESP_LOGI(TAG,"Entering main loop");
-    while (1) {
+    // 3. Bucle principal optimizado
+    ESP_LOGI(TAG, "Entrando en bucle principal");
+    while (true) {
+        const uint32_t t_start = esp_log_timestamp();
+        
         lv_timer_handler();
-
-        // Log del loop principal cada 500ms
-        static uint32_t last_log = 0;
-        if (esp_log_timestamp() - last_log > 500) {
-            ESP_LOGD(TAG, "[DEBUG] Loop activo. Tiempo: %ld", esp_log_timestamp());
-            last_log = esp_log_timestamp();
-        }
-        vTaskDelay(pdMS_TO_TICKS(10));
+        
+        // Control de FPS (Opcional)
+        const uint32_t elapsed = esp_log_timestamp() - t_start;
+        const uint32_t delay_ms = elapsed < 10 ? 10 - elapsed : 1;
+        vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
 }

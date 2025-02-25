@@ -2,16 +2,25 @@
 #define BASE_VIEW_H
 
 #include "lvgl.h"
+#include <string>
 
-typedef struct {
+class BaseView {
+protected:
     lv_obj_t* screen;
-    const char* name; // Nombre de la vista para identificarla
-    void (*register_button_handlers)(void);  // Puntero a función para registrar handlers
-    void (*unregister_button_handlers)(void); // Puntero a función para desregistrar handlers
-    void (*destroy)(void); // Nueva función para destruir la vista
-} base_view_t;
+    std::string name;
 
-lv_obj_t* create_base_view(const char* name);
-void destroy_base_view(lv_obj_t* screen);
+public:
+    BaseView(const std::string& view_name);
+    virtual ~BaseView();
+
+    virtual void register_button_handlers() = 0;
+    virtual void unregister_button_handlers() = 0;
+    virtual void destroy();
+
+    lv_obj_t* get_screen() const { return screen; }
+    std::string get_name() const { return name; }
+
+    static lv_obj_t* create_base_screen();
+};
 
 #endif
