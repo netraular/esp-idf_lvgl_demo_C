@@ -16,6 +16,7 @@
 static const char* TAG = "SCREEN_MGR";
 
 static esp_timer_handle_t lv_tick_timer = nullptr;
+static BaseView* current_view = nullptr; //  Para gestionar la vista actual
 
 static void screen_init_lvgl_tick() {
     const esp_timer_create_args_t lv_tick_timer_args = {
@@ -49,7 +50,7 @@ screen_t* screen_init() {
     }
 
     // Configuración SPI
-    spi_bus_config_t buscfg = {
+     spi_bus_config_t buscfg = {
         .mosi_io_num = TFT_MOSI,
         .miso_io_num = TFT_MISO,
         .sclk_io_num = TFT_SCLK,
@@ -65,10 +66,6 @@ screen_t* screen_init() {
         .isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO,
         .intr_flags = 0,
     };
-    
-    // Asignar los valores faltantes en una segunda etapa
-    buscfg.data_io_default_level = 0;
-    buscfg.isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO;
 
     ESP_ERROR_CHECK(spi_bus_initialize(LCD_HOST, &buscfg, SPI_DMA_CH_AUTO));
 
@@ -85,7 +82,7 @@ screen_t* screen_init() {
         .lcd_param_bits = 8,
         .cs_ena_pretrans = 0,
         .cs_ena_posttrans = 0,
-        .flags = {
+         .flags = {
             .dc_high_on_cmd = 0,
             .dc_low_on_data = 0,
             .dc_low_on_param = 0,
@@ -117,19 +114,18 @@ screen_t* screen_init() {
     esp_lcd_panel_reset(screen->panel_handle);
     esp_lcd_panel_init(screen->panel_handle);
     esp_lcd_panel_invert_color(screen->panel_handle, true);
-    esp_lcd_panel_disp_on_off(screen->panel_handle, true);
+     esp_lcd_panel_disp_on_off(screen->panel_handle, true);
 
     // Backlight
       gpio_config_t bk_gpio_config = {
         .pin_bit_mask = 1ULL << TFT_BL,
         .mode = GPIO_MODE_OUTPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE, // Inicializar
-        .pull_down_en = GPIO_PULLDOWN_DISABLE, // Inicializar
-        .intr_type = GPIO_INTR_DISABLE // Inicializar
+         .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE
     };
     ESP_ERROR_CHECK(gpio_config(&bk_gpio_config));
     gpio_set_level(TFT_BL, EXAMPLE_LCD_BK_LIGHT_ON_LEVEL);
-
     // Inicializar LVGL
     screen_init_lvgl(screen);
     screen_init_lvgl_tick();
@@ -181,33 +177,33 @@ void screen_deinit(screen_t* screen) {
         delete screen;
     }
 }
-
 void switch_screen(const std::string& view_name) {
     ESP_LOGI(TAG, "Switching to view: %s", view_name.c_str());
 
-     // Destruir la vista actual (si existe y no es ClockView la que se va a mostrar)
-    if (view_name != "Clock") {
-        ClockView::get_instance()->destroy(); // Usa :: para acceder a miembros estáticos.
+    // Destruir la vista actual (si existe).
+    if (current_view) {
+        current_view->unregister_button_handlers();
+        current_view->destroy();
+        delete current_view; // Destruye la instancia anterior.
+        current_view = nullptr; // Importante para evitar doble destrucción.
     }
 
-
-    // Crear y mostrar la nueva vista
-    BaseView* new_view = nullptr;
+    // Crear y mostrar la nueva vista.
     if (view_name == "Clock") {
-        new_view = ClockView::get_instance();  // Usa :: para acceder a miembros estáticos.
+        current_view = new ClockView(); // Crea una nueva instancia.
     } else if (view_name == "Boot") {
-        new_view = new BootView();
+        current_view = new BootView();
     } else if (view_name == "Settings") {
-        new_view = new SettingsView();
+        current_view = new SettingsView();
     } else if (view_name == "System Info") {
-        new_view = new SystemInfoView();
+        current_view = new SystemInfoView();
     } else {
         ESP_LOGE(TAG, "Unknown view: %s", view_name.c_str());
         return;
     }
 
-    if (new_view) {
-        new_view->register_button_handlers();
-        lv_disp_load_scr(new_view->get_screen());
+    if (current_view) {
+        current_view->register_button_handlers();
+        lv_disp_load_scr(current_view->get_screen());
     }
 }

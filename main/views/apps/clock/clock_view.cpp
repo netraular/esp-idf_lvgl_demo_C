@@ -14,8 +14,7 @@ const int CELL_SIZE = 10;
 const int CELL_SPACING = 3;
 const int CELL_RADIUS = 3;
 
-// Declaración de la instancia estática (para el Singleton)
-ClockView* ClockView::instance = nullptr;
+static ClockView* currentClockView = nullptr; // Para update_time_task
 
 ClockView::ClockView() : BaseView("Clock"), time_label(nullptr), grid(nullptr), grid_cells(), timer(nullptr),
                         hours(12), minutes(0), seconds(0)
@@ -38,14 +37,7 @@ ClockView::ClockView() : BaseView("Clock"), time_label(nullptr), grid(nullptr), 
     lv_obj_align(time_label, LV_ALIGN_CENTER, 0, 80);
 
     timer = lv_timer_create(update_time_task, 1000, this);
-}
-
-
-ClockView* ClockView::get_instance() {
-    if (instance == nullptr) {
-        instance = new ClockView();
-    }
-    return instance;
+    currentClockView = this; // Almacenar la instancia actual
 }
 
 ClockView::~ClockView() {
@@ -57,8 +49,8 @@ void ClockView::destroy() {
         lv_timer_del(timer);
         timer = nullptr;
     }
-    if (instance != nullptr) {
-        instance = nullptr; //Importante para que el singleton funcione
+     if (currentClockView == this) { // Solo limpiar si es la instancia actual
+        currentClockView = nullptr;
     }
     BaseView::destroy(); // Llamar a la clase base.
 }
@@ -106,32 +98,30 @@ void ClockView::update_grid_animation() {
 }
 
 void ClockView::update_time_task(lv_timer_t*) {
-    // Ya no es necesario verificar la instancia
-
-    instance->seconds++;
-    if (instance->seconds >= 60) {
-        instance->seconds = 0;
-        instance->minutes++;
-        if (instance->minutes >= 60) {
-            instance->minutes = 0;
-            instance->hours++;
-            if (instance->hours >= 24) {
-                instance->hours = 0;
+    if (currentClockView) { // Verificar si currentClockView es válido.
+        currentClockView->seconds++;
+        if (currentClockView->seconds >= 60) {
+            currentClockView->seconds = 0;
+            currentClockView->minutes++;
+            if (currentClockView->minutes >= 60) {
+                currentClockView->minutes = 0;
+                currentClockView->hours++;
+                if (currentClockView->hours >= 24) {
+                    currentClockView->hours = 0;
+                }
             }
         }
-    }
 
-    if (instance->time_label) {
-        lv_label_set_text_fmt(instance->time_label, "%02d:%02d:%02d",
-                              instance->hours.load(),
-                              instance->minutes.load(),
-                              instance->seconds.load());
-    }
+        if (currentClockView->time_label) {
+            lv_label_set_text_fmt(currentClockView->time_label, "%02d:%02d:%02d",
+                                currentClockView->hours.load(),
+                                currentClockView->minutes.load(),
+                                currentClockView->seconds.load());
+        }
 
-    instance->update_grid_animation();  // Llama a update_grid_animation
+        currentClockView->update_grid_animation();
+    }
 }
-
-
 void ClockView::register_button_handlers() {
     button_manager_register_view_handler(BUTTON_1, []() {
         ESP_LOGI(TAG, "Botón 1 - Modo Reloj");

@@ -1,4 +1,3 @@
-// main/views/apps/clock/clock_view.h
 #ifndef CLOCK_VIEW_H
 #define CLOCK_VIEW_H
 
@@ -19,15 +18,12 @@ private:
 
     void create_grid_cells();
     void update_grid_animation();
-    static void update_time_task(lv_timer_t* t);
+    static void update_time_task(lv_timer_t* t); // Mantenemos update_time_task como static
 
-    // Para el patrón Singleton
-    static ClockView* instance;
-    ClockView(); // Constructor privado
+     //  static void  delete_instance(); //Ya no es necesaria
 
 public:
-    // Método estático para obtener la instancia (Singleton)
-    static ClockView* get_instance();
+     ClockView();
     virtual ~ClockView();
     void register_button_handlers() override;
     void unregister_button_handlers() override;
