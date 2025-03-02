@@ -123,16 +123,16 @@ void ClockView::update_time_task(lv_timer_t*) {
     }
 }
 void ClockView::register_button_handlers() {
-    button_manager_register_view_handler(BUTTON_1, []() {
-        ESP_LOGI(TAG, "Botón 1 - Modo Reloj");
+    button_manager_register_view_handler(BUTTON_LEFT, []() {
+        ESP_LOGI(TAG, "Botón LEFT - Modo Reloj");
     });
 
-    button_manager_register_view_handler(BUTTON_3, []() {
-        ESP_LOGI(TAG, "Botón 3 - Cambiar Color");
+    button_manager_register_view_handler(BUTTON_OK, []() {
+        ESP_LOGI(TAG, "Botón OK - Cambiar Color");
     });
 
-    button_manager_register_view_handler(BUTTON_4, []() {
-        ESP_LOGI(TAG, "Botón 4 - Ir a Settings");
+    button_manager_register_view_handler(BUTTON_RIGHT, []() {
+        ESP_LOGI(TAG, "Botón RIGHT - Ir a Settings");
         switch_screen("Settings");
     });
 }

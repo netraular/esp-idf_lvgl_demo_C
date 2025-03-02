@@ -6,8 +6,8 @@ Esta vista muestra una pantalla de configuración básica. Actualmente, solo mue
 
 ## Interacción
 
-*   **Botón 1:** Navega a la vista del reloj ("Clock").
-*   **Botón 2:** Navega a la vista de información del sistema ("System Info").
+* **Botón LEFT:** Ir a Clock
+* **Botón CANCEL:** Ir a System Info
 
 ## Estructura
 * Un `lv_label` para mostrar el texto "Settings".

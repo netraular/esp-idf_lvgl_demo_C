@@ -19,11 +19,11 @@ SettingsView::~SettingsView() {
 }
 
 void SettingsView::register_button_handlers() {
-    button_manager_register_view_handler(BUTTON_1, []() {
+    button_manager_register_view_handler(BUTTON_LEFT, []() {
         switch_screen("Clock");
     });
 
-    button_manager_register_view_handler(BUTTON_2, []() {
+    button_manager_register_view_handler(BUTTON_CANCEL, []() {
         switch_screen("System Info");
     });
 }

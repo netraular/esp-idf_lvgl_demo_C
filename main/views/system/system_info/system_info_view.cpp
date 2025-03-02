@@ -19,7 +19,7 @@ SystemInfoView::~SystemInfoView() {
 }
 
 void SystemInfoView::register_button_handlers() {
-    button_manager_register_view_handler(BUTTON_3, []() {
+    button_manager_register_view_handler(BUTTON_OK, []() {
         switch_screen("Settings");
     });
 }

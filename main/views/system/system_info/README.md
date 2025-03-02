@@ -10,7 +10,7 @@ Esta vista muestra información del sistema. Actualmente, solo muestra el texto 
 
 ## Estructura
 
-*   Un `lv_label` que muestra el texto "System Info".
+* **Botón OK:** Ir a Settings
 
 ## Consideraciones
 *   Se debe ampliar esta vista para mostrar información real del sistema (versión de firmware, espacio libre, estado de la red, etc.).

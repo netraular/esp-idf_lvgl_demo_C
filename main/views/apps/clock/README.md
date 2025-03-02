@@ -6,9 +6,9 @@ Esta vista muestra un reloj digital y una animación de cuadrícula. El reloj mu
 
 ## Interacción
 
-*   **Botón 1:**  (Sin acción asignada en la vista actual, se mantiene el handler por defecto).
-*   **Botón 3:** Cambia el color de la celda de la cuadrícula que se ilumina.
-*   **Botón 4:** Navega a la vista de configuración ("Settings").
+* **Botón LEFT:** (Sin acción asignada)
+* **Botón OK:** Cambiar color
+* **Botón RIGHT:** Ir a Settings
 
 ## Estructura
 

@@ -6,11 +6,12 @@
 #include "config.h"
 
 typedef enum {
-    BUTTON_1 = 0,  // Primer botón
-    BUTTON_2,      // Valor 1
-    BUTTON_3,      // Valor 2
-    BUTTON_4,      // Valor 3
-    BUTTON_COUNT   // Valor 4 (total de botones)
+    BUTTON_LEFT = 0,
+    BUTTON_CANCEL,    
+    BUTTON_OK,
+    BUTTON_RIGHT,
+    BUTTON_ON_OFF,
+    BUTTON_COUNT
 } button_id_t;
 
 typedef void (*button_handler_t)(void);

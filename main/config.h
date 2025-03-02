@@ -14,10 +14,12 @@
 #define TFT_BL    GPIO_NUM_8
 
 // Usa GPIO_NUM_x para los pines de los botones
-#define BUTTON_4_PIN GPIO_NUM_4
-#define BUTTON_3_PIN GPIO_NUM_5
-#define BUTTON_2_PIN GPIO_NUM_6
-#define BUTTON_1_PIN GPIO_NUM_7
+#define BUTTON_LEFT_PIN    GPIO_NUM_7
+#define BUTTON_CANCEL_PIN  GPIO_NUM_6
+#define BUTTON_OK_PIN      GPIO_NUM_5
+#define BUTTON_RIGHT_PIN   GPIO_NUM_4
+#define BUTTON_ON_OFF_PIN  GPIO_NUM_1
+
 
 // Resolución de la pantalla
 #define SCREEN_WIDTH  240

@@ -7,10 +7,12 @@ static const char *TAG = "BTN_MGR";
 static button_handle_t buttons[BUTTON_COUNT];
 static button_handlers_t button_handlers[BUTTON_COUNT] = { {nullptr, nullptr} }; // Estructura para ambos handlers
 
-static void default_button1_handler() { ESP_LOGI(TAG, "Botón 1 (Default)"); }
-static void default_button2_handler() { ESP_LOGI(TAG, "Botón 2 (Default)"); }
-static void default_button3_handler() { ESP_LOGI(TAG, "Botón 3 (Default)"); }
-static void default_button4_handler() { ESP_LOGI(TAG, "Botón 4 (Default)"); }
+
+static void default_button_left_handler() { ESP_LOGI(TAG, "Botón LEFT (Default)"); }
+static void default_button_cancel_handler() { ESP_LOGI(TAG, "Botón CANCEL (Default)"); }
+static void default_button_ok_handler() { ESP_LOGI(TAG, "Botón OK (Default)"); }
+static void default_button_right_handler() { ESP_LOGI(TAG, "Botón RIGHT (Default)"); }
+static void default_button_on_off_handler() { ESP_LOGI(TAG, "Botón ON/OFF (Default)"); }
 
 void button_manager_init() {
     button_config_t btn_config = {
@@ -19,10 +21,11 @@ void button_manager_init() {
     };
     
     const button_gpio_config_t gpio_config[BUTTON_COUNT] = {
-        {BUTTON_1_PIN, 0, false, false},  // BUTTON_1
-        {BUTTON_2_PIN, 0, false, false},  // BUTTON_2
-        {BUTTON_3_PIN, 0, false, false},  // BUTTON_3
-        {BUTTON_4_PIN, 0, false, false}   // BUTTON_4
+        {BUTTON_LEFT_PIN, 0, false, false},   // BUTTON_LEFT
+        {BUTTON_CANCEL_PIN, 0, false, false}, // BUTTON_CANCEL
+        {BUTTON_OK_PIN, 0, false, false},     // BUTTON_OK
+        {BUTTON_RIGHT_PIN, 0, false, false},  // BUTTON_RIGHT
+        {BUTTON_ON_OFF_PIN, 0, false, false}  // BUTTON_ON_OFF
     };
 
     for (int i = 0; i < BUTTON_COUNT; i++) {
@@ -30,10 +33,11 @@ void button_manager_init() {
     }
     
     // Registrar handlers por defecto
-    button_manager_register_default_handler(BUTTON_1, default_button1_handler);
-    button_manager_register_default_handler(BUTTON_2, default_button2_handler);
-    button_manager_register_default_handler(BUTTON_3, default_button3_handler);
-    button_manager_register_default_handler(BUTTON_4, default_button4_handler);
+    button_manager_register_default_handler(BUTTON_LEFT, default_button_left_handler);
+    button_manager_register_default_handler(BUTTON_CANCEL, default_button_cancel_handler);
+    button_manager_register_default_handler(BUTTON_OK, default_button_ok_handler);
+    button_manager_register_default_handler(BUTTON_RIGHT, default_button_right_handler);
+    button_manager_register_default_handler(BUTTON_ON_OFF, default_button_on_off_handler);
 }
 
 void button_manager_register_default_handler(button_id_t button, button_handler_t handler) {
