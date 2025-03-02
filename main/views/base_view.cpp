@@ -6,8 +6,6 @@ BaseView::BaseView(const std::string& view_name) : name(view_name) {
 }
 
 BaseView::~BaseView() {
-    // Ya no es necesario llamar a destroy() aquí,
-    // se llama explícitamente.
 }
 
 void BaseView::destroy() {

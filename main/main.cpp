@@ -25,16 +25,16 @@ extern "C" void app_main(void) {
     switch_screen("Boot");
     ESP_LOGI(TAG, "Vista Boot mostrada");
 
-    // 3. Bucle principal optimizado
+    // 3. Bucle principal optimizado para 30 FPS
     ESP_LOGI(TAG, "Entrando en bucle principal");
     while (true) {
         const uint32_t t_start = esp_log_timestamp();
 
         lv_timer_handler();
 
-        // Control de FPS (Opcional)
+        // Control de FPS: Asegurando 30 FPS
         const uint32_t elapsed = esp_log_timestamp() - t_start;
-        const uint32_t delay_ms = elapsed < 10 ? 10 - elapsed : 1;
+        const uint32_t delay_ms = elapsed < 33 ? 33 - elapsed : 1;  // Espera 33ms para mantener 30 FPS
         vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
 }
